@@ -6,6 +6,7 @@ use Imagine\Image\Box;
 use Imagine\Image\Point;
 use Imagine\Image\ImageInterface;
 use Imagine\Image\ImagineInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 class WatermarkFilterLoader implements LoaderInterface
 {
@@ -15,13 +16,19 @@ class WatermarkFilterLoader implements LoaderInterface
     protected $imagine;
 
     /**
+     * @var Filesystem
+     */
+    protected $filesystem;
+
+    /**
      * @var string
      */
     protected $rootPath;
 
-    public function __construct(ImagineInterface $imagine, $rootPath)
+    public function __construct(ImagineInterface $imagine, Filesystem $filesystem, $rootPath)
     {
         $this->imagine = $imagine;
+        $this->filesystem = $filesystem;
         $this->rootPath = $rootPath;
     }
 
@@ -39,7 +46,12 @@ class WatermarkFilterLoader implements LoaderInterface
             $options['size'] = substr($options['size'], 0, -1) / 100;
         }
 
-        $watermark = $this->imagine->open($this->rootPath.'/'.$options['image']);
+        $path = $options['image'];
+        if (!$this->filesystem->isAbsolutePath($options['image'])) {
+            $path = $this->rootPath.'/'.$path;
+        }
+
+        $watermark = $this->imagine->open($path);
 
         $size = $image->getSize();
         $watermarkSize = $watermark->getSize();

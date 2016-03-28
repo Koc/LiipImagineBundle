@@ -5,6 +5,7 @@ namespace Liip\ImagineBundle\Imagine\Filter\Loader;
 use Imagine\Image\Point;
 use Imagine\Image\ImageInterface;
 use Imagine\Image\ImagineInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 class PasteFilterLoader implements LoaderInterface
 {
@@ -14,13 +15,19 @@ class PasteFilterLoader implements LoaderInterface
     protected $imagine;
 
     /**
+     * @var Filesystem
+     */
+    protected $filesystem;
+
+    /**
      * @var string
      */
     protected $rootPath;
 
-    public function __construct(ImagineInterface $imagine, $rootPath)
+    public function __construct(ImagineInterface $imagine, Filesystem $filesystem, $rootPath)
     {
         $this->imagine = $imagine;
+        $this->filesystem = $filesystem;
         $this->rootPath = $rootPath;
     }
 
@@ -30,7 +37,13 @@ class PasteFilterLoader implements LoaderInterface
     public function load(ImageInterface $image, array $options = array())
     {
         list($x, $y) = $options['start'];
-        $destImage = $this->imagine->open($this->rootPath.'/'.$options['image']);
+
+        $path = $options['image'];
+        if (!$this->filesystem->isAbsolutePath($options['image'])) {
+            $path = $this->rootPath.'/'.$path;
+        }
+
+        $destImage = $this->imagine->open($path);
 
         return $image->paste($destImage, new Point($x, $y));
     }
